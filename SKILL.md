@@ -15,6 +15,7 @@ description: "办公综合技能工具：Markdown 转 DOCX/PPTX（含 Mermaid �
 |------|------|
 | **Markdown 转 DOCX** | 将 Markdown 文件（含 Mermaid 图表）通过 Pandoc 转换为 DOCX 文档 |
 | **Markdown 转 PPTX** | 将 Markdown 文件（含 Mermaid 图表）通过 Pandoc 转换为 PPTX 演示文稿 |
+| **网页说明书制作** | 使用 browseros 为网站编写操作手册：采集菜单、逐级截图、编写说明文档，截图直接保存不消耗 token |
 | **视频号起流量指南** | 从算法原理到每天执行的完整方法论，含社交裂变实操、冷启动7天清单、数据复盘框架 |
 
 ---
@@ -230,3 +231,42 @@ pandoc "<input.md>" -o "<output.pptx>" --slide-level=2 --filter mermaid-filter
 2. 技能根据指南内容提供针对性建议
 3. 可结合用户的具体账号阶段（冷启动/成长期/稳定期）给出定制化方案
 4. 如需输出文档，可配合 Markdown 转 DOCX/PPTX 功能生成报告
+
+---
+
+## 五、网页说明书制作
+
+### 概述
+
+使用 browseros 浏览器自动化工具为网站编写操作手册。通过采集网站菜单结构、逐级打开页面截图、编写功能说明，最终输出完整的 Markdown 操作手册，可进一步转为 DOCX 交付。
+
+核心原则：**截图直接写入本地文件，不返回 base64 到 AI**，避免消耗大量 API token。
+
+### 指导文档
+
+详细教程请参阅：[网页说明书制作指南](docs/网页说明书制作.md)
+
+该指南涵盖：
+- 三阶段工作流程（采集菜单 → 逐级截图 → 编写文档）
+- 两种截图方法（`save_screenshot` 推荐方法 + CDP + `run` 备选方法）
+- 截图规范（命名规则、JPEG 质量、fullPage 设置）
+- 文档编写标准（章节结构、操作步骤、字段表格、mermaid 图表）
+- 质量检查清单（完整性、准确性、格式、技术检查）
+- 常见问题处理（CDP 异常、元素未加载、动态内容）
+
+### 使用说明
+
+1. 用户提供目标网站 URL 和手册输出目录
+2. 按三阶段流程执行：
+   - **阶段一**：用 `browser_navigate` + `browser_snapshot` + `browser_evaluate` 采集完整菜单结构，保存为 `menu_list.json`
+   - **阶段二**：按菜单清单逐个进入页面，使用 `save_screenshot` 直接保存截图到 `images/` 目录（JPEG quality 60-65）
+   - **阶段三**：每完成一个页面截图，立即在 Markdown 中写入对应章节（功能说明 + 截图引用 + 操作步骤 + 字段表格）
+3. 全部完成后执行质量检查清单
+4. 如需交付 Word 文档，使用 Pandoc + mermaid-filter 转为 DOCX
+
+### 注意事项
+
+- 优先使用 `save_screenshot` 工具直接保存到文件，不要用 `take_screenshot`（返回 base64）或 `act`（返回 diff）
+- 遵循「看一个功能，截图，写一个功能」的节奏，不要全部截图完再回头写文档
+- mermaid 图表在 Markdown 中使用标准代码块编写，转为 DOCX 时会自动渲染为图片
+- mermaid-filter 依赖 mermaid 10.9.6，不支持 quadrantChart / C4Context 等 11.x 图表类型
